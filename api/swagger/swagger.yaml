@@ -20,19 +20,19 @@ produces:
 tags:
 - name: 'User'
   description: Operations about Simple Users
+- name: 'Authentication'
+  description: Authentication operations
 - name: 'Card'
   description: Operations about Simple Users cards
 - name: 'Transaction'
   description: Operations about Simple Users transactions
 - name: 'Tickets'
   description: Operations about Simple tickets
-- name: 'Authentication'
-  description: Authentication operations
-#securityDefinitions:
-#  ApiKeyAuth:
-#    type: apiKey
-#    in: header
-#    name: X-Session-ID
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-Session-ID
 paths:
   /user:
     x-swagger-router-controller: user
@@ -123,26 +123,23 @@ paths:
       operationId: getCards
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       responses:
         200:
           description: Success
           schema:
             type: array
+            default: []
             items:
               $ref: "#/definitions/CardResponse"
-        400:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
     post:
       description: Create user card
       operationId: createCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: card
         in: body
@@ -155,8 +152,8 @@ paths:
           description: Success
           schema:
             $ref: "#/definitions/CreateUserResponse"
-        400:
-          description: Error
+        409:
+          description: Card already exists!
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -164,11 +161,14 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /card/{id}:
+    x-swagger-router-controller: card
     get:
       description: Get user card
       operationId: getCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
@@ -179,12 +179,8 @@ paths:
           description: Success
           schema:
             $ref: '#/definitions/CardResponse'
-        400:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
+        404:
+          description: Card not found!
           schema:
             $ref: "#/definitions/ErrorResponse"
     delete:
@@ -192,6 +188,8 @@ paths:
       operationId: deleteCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
@@ -203,12 +201,8 @@ paths:
           description: Success
           schema:
             $ref: '#/definitions/SuccessResponse'
-        400:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
+        404:
+          description: Card not found!
           schema:
             $ref: "#/definitions/ErrorResponse"
     put:
@@ -216,23 +210,31 @@ paths:
       operationId: putCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
         description: The card to update
         required: true
         type: string
+      - name: card
+        in: body
+        description: Card new properties
+        required: true
+        schema:
+            $ref: '#/definitions/UpdateCard'
       responses:
         200:
           description: Success
           schema:
             $ref: '#/definitions/CardResponse'
-        400:
-          description: Error
+        404:
+          description: Card not found!
           schema:
             $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
+        403:
+          description: Incorrect card password!
           schema:
             $ref: "#/definitions/ErrorResponse"
   /transaction:
@@ -431,7 +433,7 @@ definitions:
         example: 'Test Elek'
       age:
         type: integer
-        example: '25'
+        example: 25
   CreateUserResponse:
     required:
     - id
@@ -477,6 +479,15 @@ definitions:
         description: 'Password is required if the amount of payment is greater then the given number (0 - means always required)'
       bank_card:
         $ref: '#/definitions/BankCard'
+  UpdateCard:
+    allOf:
+      - $ref: '#/definitions/Card'
+      - type: object
+        properties:
+            newPassword:
+              type: string
+              example: 'newCardPassword'
+              description: 'Provide only if you want to update the password'
   BankCard:
     required:
     - holder_name
@@ -613,7 +624,6 @@ definitions:
   SuccessResponse:
     required:
     - success
-    - message
     properties:
       success:
         type: boolean
