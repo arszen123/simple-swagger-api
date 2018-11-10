@@ -7,6 +7,8 @@ const cors = require('cors');
 const swaggerSecurity = require('./api/helpers/swagger_security')
 const swaggerUi = require('swagger-ui-express');
 const errorHandler = require('api-error-handler')();
+const seeder = require('./seed');
+
 module.exports = app; // for testing
 
 app.use(cors());
@@ -25,7 +27,7 @@ SwaggerExpress.create(config, function(err, swaggerExpress) {
 
   var port = process.env.PORT || 10010;
 
-
+  // seeder.run();
   var options = {
     swaggerUrl: `http://127.0.0.1:${port}/swagger`
   }

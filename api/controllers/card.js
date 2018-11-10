@@ -1,8 +1,10 @@
+'use strict';
 const db = require('./db');
 const ApiError = require('./ApiError');
 const _ = require('lodash');
 require('underscore-query')(_);
 const clone = require('lodash.clonedeep');
+const cardHelper = require('../helpers/card');
 
 db.initCollection('cards');
 module.exports = {
@@ -15,40 +17,31 @@ module.exports = {
 
 function getCards(req, res) {
   let user = req.user;
+  let cards = [];
   try {
-    let cards = db.getObjects('cards', {userId: user._id});
+    cards = db.getObjects('cards', {userId: user.id});
     cards = clone(cards);
-    cards.forEach(function(card) {
-      card.id = card._id;
-      delete card._id;
-      delete card.userId;
-      delete card.bank_card.ccv;
-      delete card.password;
-    });
-    return res.json(cards);
+    cards = cardHelper.getCardResponse(cards);
   } catch {
     // silent
   }
-  return res.json([]);
+
+  if (cards.length === 0) {
+    throw new ApiError(404, 'No cards found!', 'noCards');
+  }
+
+  return res.json(cards);
 }
 
 function createCard(req, res) {
   let user = req.user;
   let card = req.swagger.params.card.value;
-  card.userId = user._id;
-  // @TODO Check if bank_card.number exists
-  try {
-    db.getObject(
-        'cards',
-        {bank_card: {number: card.bank_card.number}},
-    );
-    throw new ApiError(409, 'Card exists!');
-  } catch (e) {
-    if (e instanceof ApiError) {
-      throw e;
-    }
+  card.userId = user.id;
+  if (cardHelper.bankCardExists(card.bank_card.number)) {
+    throw new ApiError(409, 'Bank card already exists', 'cardAlreadyLinked');
   }
-  let cardId = db.createObject('cards', card)._id;
+
+  let cardId = db.createObject('cards', card).id;
   return res.json({id: cardId});
 }
 
@@ -57,16 +50,11 @@ function getCard(req, res) {
   let cardId = req.swagger.params.id.value;
   let card = null;
   try {
-    card = db.getObject('cards', {_id: cardId, userId: user._id});
+    card = db.getObject('cards', {id: cardId, userId: user.id});
   } catch (e) {
     throw new ApiError(404, `Card with '${cardId}' id not found!`);
   }
-  card = clone(card);
-  card.id = card._id;
-  delete card._id;
-  delete card.bank_card.ccv;
-  delete card.password;
-  delete card.userId;
+  card = cardHelper.getCardResponse([clone(card)])[0];
   return res.json(card);
 }
 
@@ -74,7 +62,7 @@ function deleteCard(req, res) {
   let user = req.user;
   let cardId = req.swagger.params.id.value;
   try {
-    db.deleteObject('cards', {_id: cardId, userId: user._id});
+    db.deleteObject('cards', {id: cardId, userId: user.id});
   } catch (e) {
     throw new ApiError(404, `Card with '${cardId}' id not found!`);
   }
@@ -86,13 +74,14 @@ function putCard(req, res) {
   let newCard = req.swagger.params.card.value;
   let cardId = req.swagger.params.id.value;
   let card = null;
-  let filter = {_id: cardId, userId: user._id};
-  let cardExistsError = new ApiError(404, `Card with '${cardId}' id not found!`);
+  let filter = {id: cardId, userId: user.id};
+  let errorCardNotExists = new ApiError(404,
+      `Card with '${cardId}' id not found!`);
 
   try {
     card = db.getObject('cards', filter);
   } catch (e) {
-    throw cardExistsError
+    throw errorCardNotExists;
   }
 
   if (card.password !== newCard.password) {
@@ -104,14 +93,17 @@ function putCard(req, res) {
     delete newCard.newPassword;
   }
 
+  if (newCard.bank_card.number !== card.bank_card.number &&
+      cardHelper.bankCardExists(newCard.bank_card.number)) {
+    throw new ApiError(409, 'Bank card already exists', 'cardAlreadyLinked');
+  }
+
   try {
     db.updateObject('cards', filter, newCard);
   } catch (e) {
-    throw cardExistsError;
+    throw errorCardNotExists;
   }
-  newCard = clone(newCard);
   newCard.id = cardId;
-  delete newCard.bank_card.ccv;
-  delete newCard.password;
+  newCard = cardHelper.getCardResponse([clone(newCard)])[0];
   return res.json(newCard);
 }

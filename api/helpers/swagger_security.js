@@ -1,3 +1,4 @@
+'use strict';
 const db = require('../controllers/db');
 db.initCollection('session');
 db.initCollection('users');
@@ -8,8 +9,8 @@ module.exports = {
       if (scopesOrApiKey) {
         let user = null;
         try {
-          let session = db.getObject('session', {_id: scopesOrApiKey});
-          user = db.getObject('users', {_id: session.userId});
+          let session = db.getObject('session', {id: scopesOrApiKey});
+          user = db.getObject('users', {id: session.userId});
         } catch (error) {
           // silent
         }

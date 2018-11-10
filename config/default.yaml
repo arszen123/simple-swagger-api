@@ -20,6 +20,7 @@ swagger:
     _swagger_validate:
       name: swagger_validator
       validateResponse: true
+      validateRequest: true
 
     # pipe for all swagger-node controllers
     swagger_controllers:

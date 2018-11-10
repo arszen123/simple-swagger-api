@@ -10,7 +10,11 @@ module.exports = {
 function createUser(req, res) {
   const user = req.swagger.params.user.value;
   let isUserExists = false;
-  let userExistsError = new ApiError(400, 'User with this username/email already exists')
+  let userExistsError = new ApiError(
+      400,
+      'User with this username/email already exists',
+      'userExists',
+  );
   try {
     try {
       db.getObject('users', {email: user.email});
@@ -26,5 +30,5 @@ function createUser(req, res) {
     }
   }
   let userId = db.createObject('users', user);
-  return res.json({id: userId._id});
+  return res.json({id: userId.id});
 }

@@ -1,3 +1,4 @@
+'use strict';
 const db = require('./db');
 db.initCollection('users');
 db.initCollection('session');
@@ -13,13 +14,13 @@ function login(req, res) {
     let user = db.getObject('users', credentials);
     let sessionId = null;
     try {
-      let session = db.getObject('session', {userId: user._id});
-      sessionId = session._id;
+      let session = db.getObject('session', {userId: user.id});
+      sessionId = session.id;
     } catch (error) {
       // silent
     }
     if (sessionId === null) {
-      sessionId = db.createObject('session', {userId: user._id})._id;
+      sessionId = db.createObject('session', {userId: user.id}).id;
     }
 
     return res.json({sessionID: sessionId});
@@ -34,8 +35,8 @@ function logout(req, res) {
   let sessionID = req.swagger.params['x-session-id'].value;
 
   try {
-    let session = db.deleteObject('session', {_id: sessionID});
-    return res.json({sessionID: session._id});
+    let session = db.deleteObject('session', {id: sessionID});
+    return res.json({sessionID: session.id});
   } catch (error) {
     return res.status(401).json({
       message: 'You are not logged in!',
