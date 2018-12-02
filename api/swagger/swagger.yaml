@@ -3,7 +3,7 @@ info:
   version: "0.0.1"
   title: Simple Api
 # during dev, should point to your local machine
-host: localhost:10010
+host: localhost:8000
 # basePath prefixes all resource paths
 basePath: /
 #
@@ -81,7 +81,6 @@ paths:
         200:
           description: Success
           schema:
-            # a pointer to a definition
             $ref: "#/definitions/AuthenticationResponse"
         401:
           description: Unauthorized
@@ -98,6 +97,8 @@ paths:
       operationId: logout
       tags:
       - "Authentication"
+      security:
+        - ApiKeyAuth: []
       parameters:
       - name: x-session-id
         in: header
@@ -108,7 +109,6 @@ paths:
         200:
           description: Success
           schema:
-            # a pointer to a definition
             $ref: "#/definitions/AuthenticationResponse"
         401:
           description: Unauthorized

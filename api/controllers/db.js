@@ -1,4 +1,3 @@
-'use strict';
 const crypto = require('crypto');
 _ = require('lodash');
 require('underscore-query')(_);

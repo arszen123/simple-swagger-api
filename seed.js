@@ -10,6 +10,7 @@ function run() {
   db.initCollection('events');
   db.initCollection('tickets');
   db.initCollection('cards');
+/*
 
   try {
     db.getObjects('users');
@@ -42,6 +43,7 @@ function run() {
           }
         });
   }
+*/
 
   try {
     db.getObjects('events');
@@ -96,28 +98,28 @@ function run() {
     });
 
     db.createObject('tickets',
-        {id: 'x11', description: 'Ticket description', event_ticket_id: '61'});
+        {id: 'x61', description: 'Ticket description', event_ticket_id: '61'});
     db.createObject('tickets',
-        {id: 'x12', description: 'Ticket description', event_ticket_id: '61'});
+        {id: 'x62', description: 'Ticket description', event_ticket_id: '61'});
     db.createObject('tickets',
-        {id: 'x13', description: 'Ticket description', event_ticket_id: '62'});
+        {id: 'x63', description: 'Ticket description', event_ticket_id: '62'});
     db.createObject('tickets',
-        {id: '1', description: 'Ticket description', eventId: '6'});
+        {id: 'x11', description: 'Ticket description', event_ticket_id: '11'});
     db.createObject('tickets',
-        {id: '2', description: 'Ticket description', eventId: '6'});
+        {id: 'x12', description: 'Ticket description', event_ticket_id: '11'});
     db.createObject('tickets',
-        {id: '3', description: 'Ticket description', eventId: '6'});
+        {id: 'x13', description: 'Ticket description', event_ticket_id: '12'});
     db.createObject('tickets',
-        {id: '4', description: 'Ticket description', eventId: '6'});
+        {id: 'x14', description: 'Ticket description', event_ticket_id: '12'});
     db.createObject('tickets',
-        {id: '5', description: 'Ticket description', eventId: '6'});
+        {id: 'x15', description: 'Ticket description', event_ticket_id: '13'});
     db.createObject('tickets',
-        {id: '7', description: 'Ticket description', eventId: '7'});
+        {id: 'x17', description: 'Ticket description', event_ticket_id: '13'});
     db.createObject('tickets',
-        {id: '8', description: 'Ticket description', eventId: '7'});
+        {id: 'x18', description: 'Ticket description', event_ticket_id: '14'});
     db.createObject('tickets',
-        {id: '9', description: 'Ticket description', eventId: '9'});
+        {id: 'x19', description: 'Ticket description', event_ticket_id: '14'});
     db.createObject('tickets',
-        {id: '10', description: 'Ticket description', eventId: '10'});
+        {id: 'x110', description: 'Ticket description', event_ticket_id: '14'});
   }
 }

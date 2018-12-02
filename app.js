@@ -27,11 +27,14 @@ SwaggerExpress.create(config, function(err, swaggerExpress) {
 
   var port = process.env.PORT || 10010;
 
-  // seeder.run();
+  seeder.run();
+
+  // Szenvedés lenne bekapcsolni, kong consumer apikey-el. Úgyhogy ez most skip.
+  /*
   var options = {
-    swaggerUrl: `http://127.0.0.1:${port}/swagger`
+    swaggerUrl: `http://127.0.0.1:8000/swagger`
   }
   app.use('/', swaggerUi.serve, swaggerUi.setup(null, options));
-
+*/
   app.listen(port);
 });

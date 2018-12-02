@@ -1,0 +1,64 @@
+curl -X POST \
+  http://localhost:8001/upstreams/ \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'name=simple_service'
+
+//&healthchecks.active.http_path=/&healthchecks.active.timeout=5&healthchecks.active.concurrency=10&healthchecks.active.healthy.interval=30&healthchecks.active.unhealthy.interval=30&healthchecks.active.healthy.successes=10&healthchecks.active.unhealthy.tcp_failures=5&healthchecks.active.unhealthy.timeouts=10&healthchecks.active.unhealthy.http_failures=5
+
+curl -X POST \
+  http://127.0.0.1:8001/upstreams/simple_service/targets \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'target=simple_1-api:10010&weight=100'
+
+curl -X POST \
+  http://127.0.0.1:8001/upstreams/simple_service/targets \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'target=simple_2-api:10010&weight=50'
+
+curl -X POST \
+  http://localhost:8001/services \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'name=simple_service&host=simple_service&path=/'
+
+curl -X POST \
+  http://127.0.0.1:8001/services/simple_service/routes \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'paths[]=/'
+
+curl -X POST \
+  http://localhost:8001/services/simple_service/plugins \
+  -d 'name=rate-limiting&config.second=5&config.hour=10000'
+
+curl -X POST \
+  'http://localhost:8001/consumers' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"custom_id": "web",
+	"username": "web"
+}'
+
+curl -X POST \
+  'http://localhost:8001/consumers' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"custom_id": "mobile",
+	"username": "mobile"
+}'
+
+curl -X POST \
+  http://localhost:8001/plugins \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'name=rate-limiting&config.minute=5&consumer_id=<MOBILE_CONSUMER_ID>'
+
+curl -X POST \
+  http://localhost:8001/plugins \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'name=rate-limiting&config.minute=25&consumer_id=<WEB_CONSUMER_ID>'
+
+curl -X POST \
+  http://localhost:8001/services/simple_service/plugins \
+  -d 'name=key-auth'
+
+curl -X POST http://localhost:8001/consumers/mobile/key-auth -d ''
+curl -X POST http://localhost:8001/consumers/web/key-auth -d ''
+
