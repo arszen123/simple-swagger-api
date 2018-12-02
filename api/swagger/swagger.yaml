@@ -3,7 +3,7 @@ info:
   version: "0.0.1"
   title: Simple Api
 # during dev, should point to your local machine
-host: localhost:10010
+host: localhost:8000
 # basePath prefixes all resource paths
 basePath: /
 #
@@ -20,19 +20,21 @@ produces:
 tags:
 - name: 'User'
   description: Operations about Simple Users
-- name: 'Card'
-  description: Operations about Simple Users cards
-- name: 'Transaction'
-  description: Operations about Simple Users transactions
-- name: 'Tickets'
-  description: Operations about Simple tickets
 - name: 'Authentication'
   description: Authentication operations
-#securityDefinitions:
-#  ApiKeyAuth:
-#    type: apiKey
-#    in: header
-#    name: X-Session-ID
+- name: 'Card'
+  description: Operations about Simple Users cards
+- name: 'Tickets'
+  description: Operations about Simple tickets
+- name: 'Event'
+  description: Operations about Simple events
+- name: 'Transaction'
+  description: Operations about Simple Users transactions
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-Session-ID
 paths:
   /user:
     x-swagger-router-controller: user
@@ -79,7 +81,6 @@ paths:
         200:
           description: Success
           schema:
-            # a pointer to a definition
             $ref: "#/definitions/AuthenticationResponse"
         401:
           description: Unauthorized
@@ -96,6 +97,8 @@ paths:
       operationId: logout
       tags:
       - "Authentication"
+      security:
+        - ApiKeyAuth: []
       parameters:
       - name: x-session-id
         in: header
@@ -106,7 +109,6 @@ paths:
         200:
           description: Success
           schema:
-            # a pointer to a definition
             $ref: "#/definitions/AuthenticationResponse"
         401:
           description: Unauthorized
@@ -123,15 +125,18 @@ paths:
       operationId: getCards
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       responses:
         200:
           description: Success
           schema:
             type: array
+            default: []
             items:
               $ref: "#/definitions/CardResponse"
-        400:
-          description: Error
+        404:
+          description: No cards found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -143,6 +148,8 @@ paths:
       operationId: createCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: card
         in: body
@@ -155,8 +162,8 @@ paths:
           description: Success
           schema:
             $ref: "#/definitions/CreateUserResponse"
-        400:
-          description: Error
+        409:
+          description: Card already exists
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -164,11 +171,14 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /card/{id}:
+    x-swagger-router-controller: card
     get:
       description: Get user card
       operationId: getCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
@@ -179,8 +189,8 @@ paths:
           description: Success
           schema:
             $ref: '#/definitions/CardResponse'
-        400:
-          description: Error
+        404:
+          description: Card not found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -192,6 +202,8 @@ paths:
       operationId: deleteCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
@@ -203,8 +215,8 @@ paths:
           description: Success
           schema:
             $ref: '#/definitions/SuccessResponse'
-        400:
-          description: Error
+        404:
+          description: Card not found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -216,19 +228,35 @@ paths:
       operationId: putCard
       tags:
       - "Card"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
         description: The card to update
         required: true
         type: string
+      - name: card
+        in: body
+        description: Card new properties
+        required: true
+        schema:
+            $ref: '#/definitions/UpdateCard'
       responses:
         200:
           description: Success
           schema:
             $ref: '#/definitions/CardResponse'
-        400:
-          description: Error
+        403:
+          description: Incorrect card password
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: Card not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: Card already exists
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -242,6 +270,8 @@ paths:
       operationId: getTransactions
       tags:
       - "Transaction"
+      security:
+      - ApiKeyAuth: []
       responses:
         200:
           description: Success
@@ -249,8 +279,8 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Transaction"
-        400:
-          description: Error
+        404:
+          description: No transactions found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -264,6 +294,8 @@ paths:
       operationId: getTransaction
       tags:
       - "Transaction"
+      security:
+      - ApiKeyAuth: []
       parameters:
       - name: id
         in: path
@@ -273,24 +305,100 @@ paths:
         200:
           description: Success
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Transaction"
-        400:
-          description: Error
+            $ref: "#/definitions/Transaction"
+        404:
+          description: Transaction not found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /ticket:
-    x-swagger-router-controller: ticket
+  /event:
+    x-swagger-router-controller: event
     get:
       description: Get available tickets
-      operationId: getAvailableTickets
+      operationId: getAvailableEvents
+      tags:
+      - "Event"
+      security:
+      - ApiKeyAuth: []
+      parameters:
+        - name: search
+          in: query
+          type: string
+          description: Search parameter
+        - name: from
+          in: query
+          type: string
+          format: date-time
+          description: Date from
+        - name: to
+          in: query
+          type: string
+          format: date-time
+          description: Date to
+      responses:
+        200:
+          description: Success
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Event"
+        404:
+          description: No event found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /event/{id}:
+    x-swagger-router-controller: event
+    get:
+      description: Get available tickets
+      operationId: getEventDetails
+      tags:
+      - "Event"
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/Event"
+        404:
+          description: Event not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /ticket/{eventTciketId}/order:
+    x-swagger-router-controller: ticket
+    post:
+      description: Order ticket
+      operationId: orderTicket
       tags:
       - "Tickets"
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: eventTciketId
+        in: path
+        required: true
+        type: string
+        description: Event ticket id, which you want to order
+      - name: order
+        in: body
+        schema:
+          $ref: '#/definitions/OrderTicket'
       responses:
         200:
           description: Success
@@ -302,58 +410,8 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /ticket/{id}:
-    x-swagger-router-controller: ticket
-    get:
-      description: Get available tickets
-      operationId: getAvailableTicketDetails
-      tags:
-      - "Tickets"
-      parameters:
-      - name: id
-        in: path
-        required: true
-        type: string
-      responses:
-        200:
-          description: Success
-          schema:
-            $ref: "#/definitions/Ticket"
-        400:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /ticket/{id}/order:
-    x-swagger-router-controller: ticket
-    post:
-      description: Order ticket
-      operationId: orderTicket
-      tags:
-      - "Tickets"
-      parameters:
-      - name: id
-        in: path
-        required: true
-        type: string
-      - name: order
-        in: body
-        schema:
-          $ref: '#/definitions/OrderTicket'
-      responses:
-        200:
-          description: Success
-          schema:
-            $ref: "#/definitions/Ticket"
-        400:
-          description: Error
+        403:
+          description: Incorrect password
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -367,6 +425,8 @@ paths:
       operationId: getUserTickets
       tags:
       - "Tickets"
+      security:
+      - ApiKeyAuth: []
       responses:
         200:
           description: Success
@@ -374,23 +434,25 @@ paths:
             type: array
             items:
               $ref: '#/definitions/OrderedTicket'
-        400:
-          description: Error
+        404:
+          description: No tickets found
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /user-ticket/{orderId}:
+  /user-ticket/getByEvent/{eventId}:
     x-swagger-router-controller: ticket
     get:
-      description: Get user ordered ticket by orderId
-      operationId: getUserTicket
+      description: Get user ordered ticket for an event by eventId
+      operationId: getUserTicketsByEventId
       tags:
       - "Tickets"
+      security:
+      - ApiKeyAuth: []
       parameters:
-      - name: orderId
+      - name: eventId
         in: path
         required: true
         type: string
@@ -401,6 +463,10 @@ paths:
             $ref: '#/definitions/OrderedTicket'
         400:
           description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: No tickets for the event
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -431,7 +497,7 @@ definitions:
         example: 'Test Elek'
       age:
         type: integer
-        example: '25'
+        example: 25
   CreateUserResponse:
     required:
     - id
@@ -469,6 +535,7 @@ definitions:
       password:
         type: string
         example: 'cardPassword'
+        minLength: 6
       limit:
         type: number
         example: 5000
@@ -492,13 +559,19 @@ definitions:
       number:
         type: string
         example: '4012888888881881'
-  CardsResponse:
-    type: object
-    required:
-    - cards
-    properties:
-      cards:
-        $ref: "#/definitions/CardResponse"
+      balance:
+        type: number
+        example: 100000
+  UpdateCard:
+    allOf:
+      - $ref: '#/definitions/Card'
+      - type: object
+        properties:
+            newPassword:
+              type: string
+              example: 'newCardPassword'
+              minLength: 6
+              description: 'Provide only, if you want to update the password'
   CardResponse:
     required:
     - id
@@ -530,6 +603,9 @@ definitions:
       number:
         type: string
         example: '4012888888881881'
+      balance:
+        type: number
+        example: 100000
   Transaction:
     required:
     - id
@@ -545,35 +621,66 @@ definitions:
       card_id:
         type: string
         example: '123'
+      date:
+        type: string
+        format: date-time
+      orderItem:
+        items:
+          type: object
+          required:
+            - id
+            - type
+          properties:
+            id:
+              type: string
+              example: '1'
+            type:
+              type: string
+              enum:
+                - eventTicket
+              example: 'eventTicket'
   Ticket:
+    required:
+    - id
+    - date
+    properties:
+      id:
+        type: string
+        example: '123'
+      description:
+        type: string
+        example: 'Ticket for Venom Movie'
+      date:
+        type: string
+        format: date-time
+  Event:
     required:
     - id
     - name
     - amount
-    - available
     properties:
       id:
         type: string
         example: '123'
       name:
         type: string
-        example: 'Ticket for Venom Movie'
+        example: 'Watch Hulk in the cinema'
+      description:
+        type: string
+        example: 'Event description'
       amount:
         type: number
         example: 1000
-      available:
-        type: number
-        example: 100
+      tickets:
+        type: array
+        items:
+          $ref: '#/definitions/Ticket'
   OrderTicket:
     required:
-    - ticket_id
     - amount
     - card_id
     - card_password
     properties:
-      ticket_id:
-        type: string
-        example: '123'
       amount:
         type: number
         example: 5
@@ -588,20 +695,25 @@ definitions:
         description: 'Password for the card. (Required only when the tickets price is above the card limit)'
   OrderedTicket:
     required:
-    - order_id
-    - ticket_id
+    - event_id
     - amount
     properties:
-      order_id:
-        type: string
-        example: '123'
-      ticket_id:
+      event_id:
         type: string
         example: '123'
       amount:
         type: number
         example: 5
         description: 'Amount of tickets bought'
+      tickets:
+        type: array
+        items:
+          allOf:
+            - $ref: '#/definitions/Ticket'
+            - type: object
+              properties:
+                available:
+                  type: integer
   ErrorResponse:
     required:
     - message
@@ -613,7 +725,6 @@ definitions:
   SuccessResponse:
     required:
     - success
-    - message
     properties:
       success:
         type: boolean

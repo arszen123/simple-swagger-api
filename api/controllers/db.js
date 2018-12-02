@@ -1,9 +1,8 @@
-var crypto = require('crypto');
-_ = require("lodash");
-require("underscore-query")(_);
+const crypto = require('crypto');
+_ = require('lodash');
+require('underscore-query')(_);
 
-var db = {
-};
+let db = {};
 
 module.exports = {
   initCollection: initCollection,
@@ -11,7 +10,8 @@ module.exports = {
   getObjects: getObjects,
   createObject: createObject,
   updateObject: updateObject,
-  deleteObject: deleteObject
+  deleteObject: deleteObject,
+  updateObjects: updateObjects,
 };
 
 function getRandomId() {
@@ -23,8 +23,9 @@ function initCollection(collection_name) {
 }
 
 function findObject(collection_name, filter) {
-  var obj = _.query(db[collection_name], filter)[0];
-  if(!obj) throw new Error('Object not found in collection: ' + collection_name);
+  let obj = _.query(db[collection_name], filter)[0];
+  if (!obj) throw new Error(
+      'Object not found in collection: ' + collection_name);
   else return obj;
 }
 
@@ -33,34 +34,47 @@ function getObject(collection_name, filter) {
 }
 
 function getObjects(collection_name, filter) {
-  var obj = _.query(db[collection_name], filter);
-  if(!obj.length) throw new Error('Object not found in collection: ' + collection_name);
+  let obj = _.query(db[collection_name], filter);
+  if (!obj.length) throw new Error(
+      'Object not found in collection: ' + collection_name);
   else return obj;
 }
 
 function createObject(collection_name, new_object) {
-  var obj = {
-    _id: getRandomId()
+  let obj = {
+    id: getRandomId(),
   };
   db[collection_name].push(Object.assign(obj, new_object));
   return {
-    _id: obj._id
+    id: obj.id,
   };
 }
 
 function updateObject(collection_name, filter, update_object) {
-  var obj = findObject(collection_name, filter);
-  var index = db[collection_name].indexOf(obj);
+  let obj = findObject(collection_name, filter);
+  let index = db[collection_name].indexOf(obj);
   db[collection_name][index] = Object.assign(obj, update_object);
   return {
-    _id: obj._id
+    id: obj.id,
   };
 }
 
+function updateObjects(collection_name, filter, update_object) {
+  let objs = getObjects(collection_name, filter);
+  let result = [];
+  for (let objIndex in objs) {
+    let obj = objs[objIndex];
+    let index = db[collection_name].indexOf(obj);
+    db[collection_name][index] = Object.assign(obj, update_object);
+    result.push(obj.id);
+  }
+  return result;
+}
+
 function deleteObject(collection_name, filter) {
-  var obj = findObject(collection_name, filter);
+  let obj = findObject(collection_name, filter);
   db[collection_name].splice(db[collection_name].indexOf(obj), 1);
   return {
-    _id: obj._id
+    id: obj.id,
   };
 }
